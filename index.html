@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JMR's Mapper</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    html, body { height: 100%; margin: 0; }
+    #map { position: absolute; inset: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+
+    #panel {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      z-index: 1000;
+      width: 280px;
+      background: rgba(255, 255, 255, 0.96);
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+      padding: 14px;
+      max-height: calc(100vh - 24px);
+      overflow: auto;
+    }
+
+    #panel h1 {
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+
+    .map-toggle {
+      display: flex;
+      background: #eef1f4;
+      border-radius: 8px;
+      padding: 3px;
+      margin-bottom: 12px;
+    }
+
+    .map-toggle button {
+      flex: 1;
+      border: 0;
+      background: transparent;
+      padding: 7px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .map-toggle button.active {
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+    }
+
+    #track-list { margin: 0; padding: 0; list-style: none; }
+    #track-list li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 6px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #track-list li.selected { background: #e8f1ff; }
+    #track-list input[type="color"] {
+      width: 28px;
+      height: 22px;
+      border: 0;
+      background: none;
+      padding: 0;
+      cursor: pointer;
+    }
+    #track-list input.name-input {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid #d8dee6;
+      border-radius: 6px;
+      padding: 4px 6px;
+      font: inherit;
+      font-size: 13px;
+    }
+    #track-list .del-btn {
+      border: 0;
+      background: transparent;
+      color: #c0392b;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 2px;
+    }
+
+    .hint {
+      margin: 10px 0 0;
+      color: #555;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    #file-btn {
+      display: inline-block;
+      margin-top: 10px;
+      font-size: 12px;
+      color: #2457d6;
+      cursor: pointer;
+    }
+
+    #color-pop {
+      display: none;
+      position: absolute;
+      z-index: 1100;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      padding: 10px;
+    }
+
+    .swatches { display: flex; gap: 6px; flex-wrap: wrap; width: 168px; }
+    .swatch {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <div id="panel">
+    <h1>Vermont track 2.1</h1>
+    <div class="map-toggle">
+      <button id="btn-regular" class="active" type="button">Regular map</button>
+      <button id="btn-satellite" type="button">Satellite</button>
+    </div>
+    <ul id="track-list"></ul>
+    <p class="hint">Click a line to select it (dots appear). Click that same line again to split it. Name and color pieces in the list. Use × to delete.</p>
+    <label id="file-btn">Add GPX files
+      <input id="gpx-file" type="file" accept=".gpx,application/gpx+xml" multiple hidden />
+    </label>
+  </div>
+
+  <div id="color-pop">
+    <div class="swatches" id="swatches"></div>
+  </div>
+
+  <script type="text/plain" id="embedded-gpx">
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<gpx version="1.1" creator="OsmAnd Maps 5.4.0 (5448)" xmlns="http://www.topografix.com/GPX/1/1" xmlns:osmand="https://osmand.net/docs/technical/osmand-file-formats/osmand-gpx" xmlns:gpxtpx="https://www8.garmin.com/xmlschemas/TrackPointExtensionv1.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 https://www.topografix.com/GPX/1/1/gpx.xsd">
+    <metadata>
+        <name>vermont track 2.1 2026-08-10_17-46_Mon</name>
+        <time>2026-08-10T21:49:55Z</time>
+    </metadata>
+    <trk>
+        <trkseg>
+            <trkpt lat="42.8610785" lon="-72.8894094">
+                <ele>460.7</ele>
+                <time>2026-08-10T21:46:36Z</time>
+                <hdop>3.3</hdop>
+                <extensions>
+                    <osmand:speed>1.3</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.862152" lon="-72.8889585">
+                <ele>452.8</ele>
+                <time>2026-08-10T21:47:17Z</time>
+                <hdop>9.3</hdop>
+                <extensions>
+                    <osmand:speed>7.8</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.862192" lon="-72.8888384">
+                <ele>482.4</ele>
+                <time>2026-08-10T21:47:19Z</time>
+                <hdop>6.2</hdop>
+                <extensions>
+                    <osmand:speed>5.4</osmand:speed>
+                </extensions>
+            </trkpt>
+        </trkseg>
+    </trk>
+    <trk>
+        <trkseg>
+            <trkpt lat="42.862047" lon="-72.8884686">
+                <ele>474.2</ele>
+                <time>2026-08-10T21:47:45Z</time>
+                <hdop>13.5</hdop>
+            </trkpt>
+            <trkpt lat="42.8620576" lon="-72.8884982">
+                <ele>481.7</ele>
+                <time>2026-08-10T21:47:47Z</time>
+                <hdop>13.7</hdop>
+                <extensions>
+                    <osmand:speed>0.6</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.8620759" lon="-72.8884329">
+                <ele>483.5</ele>
+                <time>2026-08-10T21:47:49Z</time>
+                <hdop>10.3</hdop>
+                <extensions>
+                    <osmand:speed>1.9</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.8621497" lon="-72.8884503">
+                <ele>482.8</ele>
+                <time>2026-08-10T21:47:51Z</time>
+                <hdop>6.9</hdop>
+                <extensions>
+                    <osmand:speed>3.4</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.8622191" lon="-72.8885209">
+                <ele>482.6</ele>
+                <time>2026-08-10T21:47:53Z</time>
+                <hdop>5.2</hdop>
+                <extensions>
+                    <osmand:speed>4</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.8623038" lon="-72.8886592">
+                <ele>482.7</ele>
+                <time>2026-08-10T21:47:55Z</time>
+                <hdop>4.1</hdop>
+                <extensions>
+                    <osmand:speed>6</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.8623705" lon="-72.8887796">
+                <ele>482.9</ele>
+                <time>2026-08-10T21:47:57Z</time>
+                <hdop>4.7</hdop>
+                <extensions>
+                    <osmand:speed>5.7</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.8623996" lon="-72.8888509">
+                <ele>483.1</ele>
+                <time>2026-08-10T21:47:59Z</time>
+                <hdop>4.7</hdop>
+                <extensions>
+                    <osmand:speed>4.1</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.8624474" lon="-72.8888365">
+                <ele>482.9</ele>
+                <time>2026-08-10T21:48:01Z</time>
+                <hdop>4.7</hdop>
+                <extensions>
+                    <osmand:speed>3.2</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.8624694" lon="-72.8887926">
+                <ele>485.4</ele>
+                <time>2026-08-10T21:48:03Z</time>
+                <hdop>4.7</hdop>
+                <extensions>
+                    <osmand:speed>2.8</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.8625245" lon="-72.8888236">
+                <ele>486.9</ele>
+                <time>2026-08-10T21:48:05Z</time>
+                <hdop>4.7</hdop>
+                <extensions>
+                    <osmand:speed>2.8</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.8625976" lon="-72.8888637">
+                <ele>488.3</ele>
+                <time>2026-08-10T21:48:07Z</time>
+                <hdop>4.7</hdop>
+                <extensions>
+                    <osmand:speed>2.9</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.8626453" lon="-72.8888772">
+                <ele>490.3</ele>
+                <time>2026-08-10T21:48:09Z</time>
+                <hdop>4.7</hdop>
+                <extensions>
+                    <osmand:speed>2.6</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.8627057" lon="-72.8888979">
+                <ele>492.3</ele>
+                <time>2026-08-10T21:48:11Z</time>
+                <hdop>4.7</hdop>
+                <extensions>
+                    <osmand:speed>3.4</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.8627813" lon="-72.8889637">
+                <ele>493.5</ele>
+                <time>2026-08-10T21:48:13Z</time>
+                <hdop>4.7</hdop>
+                <extensions>
+                    <osmand:speed>4.2</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.8628783" lon="-72.8890836">
+                <ele>493.4</ele>
+                <time>2026-08-10T21:48:15Z</time>
+                <hdop>4.7</hdop>
+                <extensions>
+                    <osmand:speed>5</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.8629062" lon="-72.8891157">
+                <ele>495.1</ele>
+                <time>2026-08-10T21:48:17Z</time>
+                <hdop>4.7</hdop>
+                <extensions>
+                    <osmand:speed>2.2</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.8629229" lon="-72.8891025">
+                <ele>495.6</ele>
+                <time>2026-08-10T21:48:19Z</time>
+                <hdop>4.7</hdop>
+                <extensions>
+                    <osmand:speed>0.4</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.86292" lon="-72.8890969">
+                <ele>496.1</ele>
+                <time>2026-08-10T21:48:21Z</time>
+                <hdop>4.7</hdop>
+                <extensions>
+                    <osmand:speed>0.7</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.8629317" lon="-72.8890987">
+                <ele>496.9</ele>
+                <time>2026-08-10T21:48:23Z</time>
+                <hdop>4.7</hdop>
+                <extensions>
+                    <osmand:speed>0.6</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.862934" lon="-72.8891171">
+                <ele>497.1</ele>
+                <time>2026-08-10T21:48:25Z</time>
+                <hdop>4.7</hdop>
+                <extensions>
+                    <osmand:speed>0.9</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.8629397" lon="-72.8891099">
+                <ele>498</ele>
+                <time>2026-08-10T21:48:27Z</time>
+                <hdop>4.7</hdop>
+                <extensions>
+                    <osmand:speed>0.1</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.8629362" lon="-72.8891021">
+                <ele>497.5</ele>
+                <time>2026-08-10T21:48:29Z</time>
+                <hdop>4.7</hdop>
+                <extensions>
+                    <osmand:speed>0.5</osmand:speed>
+                </extensions>
+            </trkpt>
+        </trkseg>
+    </trk>
+    <trk>
+        <trkseg>
+            <trkpt lat="42.8624503" lon="-72.888785">
+                <ele>503.8</ele>
+                <time>2026-08-10T21:48:56Z</time>
+                <hdop>11.3</hdop>
+                <extensions>
+                    <osmand:speed>1.6</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.862381" lon="-72.8888076">
+                <ele>494.8</ele>
+                <time>2026-08-10T21:48:58Z</time>
+                <hdop>8.2</hdop>
+                <extensions>
+                    <osmand:speed>1.6</osmand:speed>
+                </extensions>
+            </trkpt>
+            <trkpt lat="42.8615011" lon="-72.8908109">
+                <ele>490.7</ele>
+                <time>2026-08-10T21:49:11Z</time>
+                <hdop>40.1</hdop>
+            </trkpt>
+            <trkpt lat="42.8613823" lon="-72.8909915">
+                <ele>481.2</ele>
+                <time>2026-08-10T21:49:18Z</time>
+                <hdop>45.6</hdop>
+            </trkpt>
+            <trkpt lat="42.8613823" lon="-72.8909915">
+                <ele>481.2</ele>
+                <time>2026-08-10T21:49:20Z</time>
+                <hdop>45.6</hdop>
+            </trkpt>
+            <trkpt lat="42.8613732" lon="-72.8909672">
+                <ele>481.5</ele>
+                <time>2026-08-10T21:49:29Z</time>
+                <hdop>41.9</hdop>
+            </trkpt>
+            <trkpt lat="42.8613237" lon="-72.8910377">
+                <ele>481.5</ele>
+                <time>2026-08-10T21:49:32Z</time>
+                <hdop>19.9</hdop>
+            </trkpt>
+            <trkpt lat="42.861323" lon="-72.8910387">
+                <ele>476</ele>
+                <time>2026-08-10T21:49:34Z</time>
+                <hdop>20</hdop>
+            </trkpt>
+            <trkpt lat="42.861323" lon="-72.8910387">
+                <ele>476</ele>
+                <time>2026-08-10T21:49:36Z</time>
+                <hdop>20</hdop>
+            </trkpt>
+            <trkpt lat="42.8612661" lon="-72.8910187">
+                <ele>477.4</ele>
+                <time>2026-08-10T21:49:38Z</time>
+                <hdop>20</hdop>
+            </trkpt>
+            <trkpt lat="42.8612661" lon="-72.8910187">
+                <ele>477.4</ele>
+                <time>2026-08-10T21:49:40Z</time>
+                <hdop>20</hdop>
+            </trkpt>
+            <trkpt lat="42.8612661" lon="-72.8910187">
+                <ele>477.4</ele>
+                <time>2026-08-10T21:49:44Z</time>
+                <hdop>19.5</hdop>
+            </trkpt>
+            <trkpt lat="42.8612661" lon="-72.8910187">
+                <ele>477.4</ele>
+                <time>2026-08-10T21:49:50Z</time>
+                <hdop>19.9</hdop>
+            </trkpt>
+            <trkpt lat="42.8612562" lon="-72.8910202">
+                <ele>477.4</ele>
+                <time>2026-08-10T21:49:55Z</time>
+                <hdop>18.6</hdop>
+            </trkpt>
+        </trkseg>
+    </trk>
+    <extensions>
+        <osmand:show_arrows>false</osmand:show_arrows>
+        <osmand:show_start_finish>false</osmand:show_start_finish>
+        <osmand:vertical_exaggeration_scale>0.25</osmand:vertical_exaggeration_scale>
+        <osmand:elevation_meters>1000.0</osmand:elevation_meters>
+        <osmand:line_3d_visualization_by_type>none</osmand:line_3d_visualization_by_type>
+        <osmand:line_3d_visualization_wall_color_type>upward_gradient</osmand:line_3d_visualization_wall_color_type>
+        <osmand:line_3d_visualization_position_type>top</osmand:line_3d_visualization_position_type>
+        <osmand:color>#00000000</osmand:color>
+        <osmand:coloring_type>solid</osmand:coloring_type>
+        <osmand:is_join_segments>false</osmand:is_join_segments>
+        <osmand:split_interval>0.0</osmand:split_interval>
+        <osmand:split_type>no_split</osmand:split_type>
+        <osmand:width>thin</osmand:width>
+    </extensions>
+</gpx>
+
+  </script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const COLORS = ["#e74c3c", "#3498db", "#f39c12", "#2ecc71", "#9b59b6", "#1abc9c", "#e91e63", "#111111"];
+    const SWATCHES = COLORS.concat(["#ffffff", "#fdcb6e"]);
+
+    const streetLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap"
+    });
+    const satelliteLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+      maxZoom: 19,
+      attribution: "Tiles &copy; Esri"
+    });
+
+    const map = L.map("map", { layers: [streetLayer] });
+    map.setView([42.862, -72.889], 16);
+
+    const tracks = [];
+    let selected = null;
+    const vertexLayer = L.layerGroup().addTo(map);
+
+    function byLocalName(root, tag) {
+      return [...root.getElementsByTagName("*")].filter((el) => el.localName === tag);
+    }
+
+    function parseGpx(xmlText) {
+      const doc = new DOMParser().parseFromString(xmlText, "application/xml");
+      const trkNodes = byLocalName(doc, "trk");
+      return trkNodes.map((trk, i) => {
+        const nameNode = byLocalName(trk, "name")[0];
+        const name = nameNode ? nameNode.textContent : "Track " + (i + 1);
+        const segs = byLocalName(trk, "trkseg").map((seg) => {
+          return byLocalName(seg, "trkpt").map((pt) => {
+            return [Number(pt.getAttribute("lat")), Number(pt.getAttribute("lon"))];
+          }).filter((p) => Number.isFinite(p[0]) && Number.isFinite(p[1]));
+        }).filter((pts) => pts.length > 0);
+        return { name, segs };
+      }).filter((t) => t.segs.length > 0);
+    }
+
+    function clearTracks() {
+      tracks.forEach((t) => t.group.remove());
+      tracks.length = 0;
+      selected = null;
+      vertexLayer.clearLayers();
+      hideColorPop();
+    }
+
+    function removeTrack(track) {
+      track.group.remove();
+      if (track.row) track.row.remove();
+      const i = tracks.indexOf(track);
+      if (i >= 0) tracks.splice(i, 1);
+      if (selected === track) {
+        selected = null;
+        vertexLayer.clearLayers();
+      }
+    }
+
+    function setTrackColor(track, color) {
+      track.color = color;
+      track.line.setStyle({ color: color });
+      track.hit.setStyle({ color: color });
+      if (track.input) track.input.value = color;
+      if (selected === track) showVertices(track);
+    }
+
+    function selectTrack(track, clickEvent) {
+      selected = track;
+      tracks.forEach((t) => {
+        t.line.setStyle({ weight: t === track ? 12 : 8 });
+        t.row.classList.toggle("selected", t === track);
+      });
+      showVertices(track);
+      // Color popup only when the list color box asked for it, not on map clicks.
+      if (clickEvent && clickEvent.showColors) {
+        const pop = document.getElementById("color-pop");
+        pop.style.display = "block";
+        pop.style.left = (clickEvent.originalEvent.clientX + 12) + "px";
+        pop.style.top = (clickEvent.originalEvent.clientY + 12) + "px";
+      } else {
+        hideColorPop();
+      }
+    }
+
+    // Dots on the selected track so the split points are visible.
+    function showVertices(track) {
+      vertexLayer.clearLayers();
+      if (!track || !track.points) return;
+      track.points.forEach((pt) => {
+        L.circleMarker(pt, {
+          radius: 6,
+          color: "#ffffff",
+          weight: 2,
+          fillColor: track.color,
+          fillOpacity: 1,
+          interactive: false
+        }).addTo(vertexLayer);
+      });
+    }
+
+    function hideColorPop() {
+      document.getElementById("color-pop").style.display = "none";
+    }
+
+    // Closest point on one straight segment; used to pick the split location.
+    function closestOnSegment(click, a, b) {
+      const p = L.latLng(click);
+      const ax = a[1], ay = a[0], bx = b[1], by = b[0];
+      const dx = bx - ax, dy = by - ay;
+      const len2 = dx * dx + dy * dy;
+      let t = 0;
+      if (len2 > 0) t = ((p.lng - ax) * dx + (p.lat - ay) * dy) / len2;
+      t = Math.max(0, Math.min(1, t));
+      const point = [ay + t * dy, ax + t * dx];
+      return { point: point, t: t, dist: p.distanceTo(point) };
+    }
+
+    // Cut one track into two pieces that share the click point.
+    function splitTrackAt(track, latlng) {
+      const pts = track.points;
+      if (!pts || pts.length < 2) return;
+      let best = { i: 0, dist: Infinity, point: pts[0], t: 0 };
+      for (let i = 0; i < pts.length - 1; i++) {
+        const hit = closestOnSegment(latlng, pts[i], pts[i + 1]);
+        if (hit.dist < best.dist) best = { i: i, dist: hit.dist, point: hit.point, t: hit.t };
+      }
+      // Always put the click point on both pieces so a 2-point line can still split.
+      const left = pts.slice(0, best.i + 1).concat([best.point]);
+      const right = [best.point].concat(pts.slice(best.i + 1));
+      if (left.length < 2 || right.length < 2) return;
+      const idx = tracks.indexOf(track);
+      const leftName = track.name || ("Track " + (idx + 1));
+      const leftColor = track.color;
+      const rightColor = COLORS[(idx + 1) % COLORS.length];
+      removeTrack(track);
+      addOneTrack({ name: leftName, segs: [left] }, leftColor, idx, false);
+      addOneTrack({ name: leftName + " b", segs: [right] }, rightColor, idx + 1, false);
+      selectTrack(tracks[idx + 1]);
+      if (tracks[idx + 1].nameInput) {
+        tracks[idx + 1].nameInput.focus();
+        tracks[idx + 1].nameInput.select();
+      }
+    }
+
+    function fitToTracks() {
+      const valid = tracks.filter((t) => t.group.getBounds().isValid());
+      if (!valid.length) return;
+      let fit = valid[0].group.getBounds();
+      valid.slice(1).forEach((t) => { fit.extend(t.group.getBounds()); });
+      map.invalidateSize();
+      map.fitBounds(fit.pad(0.15));
+    }
+
+    function addOneTrack(data, color, insertAt, doFit) {
+      const list = document.getElementById("track-list");
+      const name = (data.name && String(data.name).trim()) || ("Track " + (tracks.length + 1));
+      if (!color) color = COLORS[tracks.length % COLORS.length];
+      const points = (data.segs.length === 1 ? data.segs[0] : data.segs.flat()).map((p) => [p[0], p[1]]);
+      const group = L.featureGroup().addTo(map);
+      const hit = L.polyline(points, { color: color, weight: 18, opacity: 0 });
+      const line = L.polyline(points, { color: color, weight: 8, opacity: 1 });
+      hit.addTo(group);
+      line.addTo(group);
+
+      const row = document.createElement("li");
+      const input = document.createElement("input");
+      input.type = "color";
+      input.value = color;
+      input.title = "Color this segment";
+      const nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.className = "name-input";
+      nameInput.value = name;
+      nameInput.title = "Name this segment";
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "del-btn";
+      del.title = "Delete this segment";
+      del.textContent = "×";
+      row.appendChild(input);
+      row.appendChild(nameInput);
+      row.appendChild(del);
+
+      const track = { name: name, color: color, group: group, line: line, hit: hit, row: row, input: input, nameInput: nameInput, points: points };
+      if (insertAt == null || insertAt >= tracks.length) {
+        tracks.push(track);
+        list.appendChild(row);
+      } else {
+        tracks.splice(insertAt, 0, track);
+        list.insertBefore(row, list.children[insertAt] || null);
+      }
+
+      function onPick(e) {
+        L.DomEvent.stopPropagation(e);
+        // First click selects; click the same selected line again to split it.
+        if (selected === track) {
+          splitTrackAt(track, e.latlng);
+          return;
+        }
+        selectTrack(track);
+      }
+      hit.on("click", onPick);
+      line.on("click", onPick);
+      row.addEventListener("click", () => selectTrack(track));
+      input.addEventListener("input", () => {
+        setTrackColor(track, input.value);
+        if (selected === track) showVertices(track);
+      });
+      input.addEventListener("click", (e) => {
+        e.stopPropagation();
+        selectTrack(track, { showColors: true, originalEvent: e });
+      });
+      nameInput.addEventListener("input", () => { track.name = nameInput.value; });
+      nameInput.addEventListener("click", (e) => e.stopPropagation());
+      del.addEventListener("click", (e) => {
+        e.stopPropagation();
+        removeTrack(track);
+      });
+      if (doFit) fitToTracks();
+    }
+
+    // Add tracks without wiping ones already on the map.
+    function addTracks(parsed) {
+      parsed.forEach((data) => addOneTrack(data, null, null, false));
+      fitToTracks();
+    }
+
+    function showTracks(parsed) {
+      clearTracks();
+      document.getElementById("track-list").innerHTML = "";
+      addTracks(parsed);
+    }
+
+    function loadGpxText(xmlText) {
+      showTracks(parseGpx(xmlText));
+    }
+
+    function loadDefaultGpx() {
+      // Use the GPX copied into this page first so tracks show even if fetch is blocked.
+      const embedded = document.getElementById("embedded-gpx");
+      if (embedded && embedded.textContent.trim()) {
+        loadGpxText(embedded.textContent);
+        return;
+      }
+      fetch("vermont-track-2.1.gpx")
+        .then((res) => {
+          if (!res.ok) throw new Error("fetch failed");
+          return res.text();
+        })
+        .then(loadGpxText)
+        .catch(() => {
+          document.querySelector(".hint").textContent =
+            "Could not auto-load the GPX. Use “Add GPX files” and pick the Vermont file.";
+        });
+    }
+
+    document.getElementById("btn-regular").onclick = function () {
+      if (map.hasLayer(satelliteLayer)) map.removeLayer(satelliteLayer);
+      if (!map.hasLayer(streetLayer)) map.addLayer(streetLayer);
+      this.classList.add("active");
+      document.getElementById("btn-satellite").classList.remove("active");
+    };
+
+    document.getElementById("btn-satellite").onclick = function () {
+      if (map.hasLayer(streetLayer)) map.removeLayer(streetLayer);
+      if (!map.hasLayer(satelliteLayer)) map.addLayer(satelliteLayer);
+      this.classList.add("active");
+      document.getElementById("btn-regular").classList.remove("active");
+    };
+
+    document.getElementById("gpx-file").addEventListener("change", function (e) {
+      [...e.target.files].forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = () => addTracks(parseGpx(reader.result));
+        reader.readAsText(file);
+      });
+    });
+
+    const swatchBox = document.getElementById("swatches");
+    SWATCHES.forEach((c) => {
+      const d = document.createElement("div");
+      d.className = "swatch";
+      d.style.background = c;
+      d.title = c;
+      d.onclick = function (e) {
+        e.stopPropagation();
+        if (selected) setTrackColor(selected, c);
+        hideColorPop();
+      };
+      swatchBox.appendChild(d);
+    });
+
+    map.on("click", hideColorPop);
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideColorPop(); });
+
+    loadDefaultGpx();
+  </script>
+</body>
+</html>
