@@ -618,7 +618,7 @@
     function selectTrack(track, clickEvent) {
       selected = track;
       tracks.forEach((t) => {
-        t.line.setStyle({ weight: t === track ? 12 : 8 });
+        t.line.setStyle({ weight: 8 });
         if (t.row) t.row.classList.toggle("selected", t === track);
       });
       if (toolMode === "split") showVertices(track);
