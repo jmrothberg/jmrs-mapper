@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="JMR's Mapper" />
+  <link rel="apple-touch-icon" href="vermont-preview.png" />
   <title>JMR's Mapper</title>
   <meta name="description" content="Map, split, name, and color GPX tracks." />
   <meta property="og:title" content="JMR's Mapper" />
@@ -19,6 +23,7 @@
     html, body { height: 100%; margin: 0; }
     #map { position: absolute; inset: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    button, label, input { touch-action: manipulation; }
 
     #panel {
       position: absolute;
@@ -32,11 +37,29 @@
       padding: 14px;
       max-height: calc(100vh - 24px);
       overflow: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
+    .panel-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
     #panel h1 {
-      margin: 0 0 10px;
+      margin: 0;
       font-size: 16px;
+    }
+    #btn-panel-toggle {
+      display: none;
+      border: 0;
+      background: #eef1f4;
+      border-radius: 8px;
+      min-width: 44px;
+      min-height: 44px;
+      font-size: 20px;
+      cursor: pointer;
     }
 
     .map-toggle {
@@ -51,7 +74,8 @@
       flex: 1;
       border: 0;
       background: transparent;
-      padding: 7px 8px;
+      padding: 10px 8px;
+      min-height: 44px;
       border-radius: 6px;
       cursor: pointer;
       font-weight: 600;
@@ -78,20 +102,24 @@
       color: #fff;
       font-weight: 600;
       border-radius: 8px;
-      padding: 8px;
+      padding: 12px 8px;
+      min-height: 44px;
+      box-sizing: border-box;
       margin-bottom: 12px;
       cursor: pointer;
     }
-    #btn-fit {
-      width: 100%;
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+    .btn-row button {
+      flex: 1;
       border: 0;
       background: #eef1f4;
-      padding: 8px;
+      padding: 12px 8px;
+      min-height: 44px;
       border-radius: 8px;
       cursor: pointer;
       font-weight: 600;
-      margin-top: 8px;
     }
+    #btn-save { background: #1f7a3a; color: #fff; }
 
     .file-block { margin-bottom: 10px; }
     .file-head, .track-head, .seg-row {
@@ -109,15 +137,15 @@
     .file-head input[type="checkbox"],
     .track-head input[type="checkbox"],
     .seg-row input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
+      width: 22px;
+      height: 22px;
       margin: 0;
       flex-shrink: 0;
     }
     .file-title, .track-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
     .seg-row input[type="color"] {
-      width: 28px;
-      height: 22px;
+      width: 44px;
+      height: 36px;
       border: 0;
       background: none;
       padding: 0;
@@ -128,20 +156,52 @@
       min-width: 0;
       border: 1px solid #d8dee6;
       border-radius: 6px;
-      padding: 4px 6px;
+      padding: 8px 6px;
       font: inherit;
-      font-size: 13px;
+      font-size: 16px;
     }
     .seg-row .del-btn {
       border: 0;
       background: transparent;
       color: #c0392b;
-      font-size: 18px;
+      font-size: 28px;
       line-height: 1;
       cursor: pointer;
-      padding: 0 2px;
+      padding: 0 8px;
+      min-width: 44px;
+      min-height: 44px;
     }
     .off-label { opacity: 0.45; }
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    .check-row input { width: 22px; height: 22px; }
+    .seg-row select.line-style {
+      font-size: 16px;
+      border: 1px solid #d8dee6;
+      border-radius: 6px;
+      padding: 6px 4px;
+      max-width: 7.8em;
+      background: #fff;
+    }
+    .seg-label {
+      background: rgba(255, 255, 255, 0.92);
+      border: 0;
+      border-radius: 6px;
+      padding: 2px 7px;
+      font-weight: 700;
+      font-size: 12px;
+      color: #111;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    }
+    .leaflet-tooltip-top:before,
+    .leaflet-tooltip-bottom:before,
+    .leaflet-tooltip-left:before,
+    .leaflet-tooltip-right:before { display: none; }
 
     .hint {
       margin: 10px 0 0;
@@ -162,11 +222,27 @@
 
     .swatches { display: flex; gap: 6px; flex-wrap: wrap; width: 168px; }
     .swatch {
-      width: 22px;
-      height: 22px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       border: 1px solid rgba(0, 0, 0, 0.15);
       cursor: pointer;
+    }
+
+    @media (max-width: 900px) {
+      #panel {
+        top: auto;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: auto;
+        max-height: 46vh;
+        border-radius: 16px 16px 0 0;
+        padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+      }
+      #btn-panel-toggle { display: inline-flex; align-items: center; justify-content: center; }
+      #panel.collapsed { max-height: none; }
+      #panel.collapsed #panel-body { display: none; }
     }
   </style>
 </head>
@@ -174,7 +250,11 @@
   <div id="map"></div>
 
   <div id="panel">
-    <h1>Mapper</h1>
+    <div class="panel-top">
+      <h1>Mapper</h1>
+      <button id="btn-panel-toggle" type="button" aria-label="Hide tools">▾</button>
+    </div>
+    <div id="panel-body">
     <div class="map-toggle">
       <button id="btn-regular" class="active" type="button">Regular map</button>
       <button id="btn-satellite" type="button">Satellite</button>
@@ -185,11 +265,16 @@
     </div>
     <p id="tool-status"></p>
     <label id="file-btn">Add GPX files
-      <input id="gpx-file" type="file" accept=".gpx,application/gpx+xml" multiple hidden />
+      <input id="gpx-file" type="file" accept=".gpx,.xml,application/gpx+xml,application/xml,text/xml,application/octet-stream" multiple hidden />
     </label>
+    <label class="check-row"><input id="chk-names" type="checkbox" /> Show names on map</label>
     <div id="file-list"></div>
-    <button id="btn-fit" type="button">Fit visible</button>
-    <p class="hint">Check a box to show or hide a file, a track, or a segment. Color is the default tool: click a line to color it. Use × to delete.</p>
+    <div class="btn-row">
+      <button id="btn-save" type="button">Save map</button>
+      <button id="btn-fit" type="button">Fit visible</button>
+    </div>
+    <p class="hint">Check a box to show or hide a file, a track, or a segment. Color is the default tool: click a line to color it. Use × to delete. Save map downloads one GPX with all segments and styles.</p>
+    </div>
   </div>
 
   <div id="color-pop">
@@ -528,8 +613,12 @@
       attribution: "Tiles &copy; Esri"
     });
 
-    const map = L.map("map", { layers: [streetLayer] });
-    map.setView([42.862, -72.889], 16);
+    const DEFAULT_CENTER = [42.862, -72.889];
+    const SAVE_KEY = "jmrs-mapper-save";
+    const map = L.map("map", { layers: [streetLayer], tap: true });
+    map.setView(DEFAULT_CENTER, 16);
+    L.DomEvent.disableClickPropagation(document.getElementById("panel"));
+    L.DomEvent.disableScrollPropagation(document.getElementById("panel"));
 
     const tracks = [];
     const files = [];
@@ -537,10 +626,25 @@
     let nextId = 1;
     let selected = null;
     let toolMode = "color";
+    let showNames = false;
+    let splitPick = null; // first click of a start/end split
     const vertexLayer = L.layerGroup().addTo(map);
 
     function byLocalName(root, tag) {
       return [...root.getElementsByTagName("*")].filter((el) => el.localName === tag);
+    }
+
+    function localText(root, tag) {
+      const el = byLocalName(root, tag)[0];
+      return el ? el.textContent.trim() : "";
+    }
+
+    function normColor(c) {
+      if (!c) return "";
+      c = c.trim();
+      if (c.charAt(0) !== "#") c = "#" + c;
+      if (c.length === 9) return "#" + c.slice(3);
+      return c;
     }
 
     function parseGpx(xmlText) {
@@ -554,8 +658,36 @@
             return [Number(pt.getAttribute("lat")), Number(pt.getAttribute("lon"))];
           }).filter((p) => Number.isFinite(p[0]) && Number.isFinite(p[1]));
         }).filter((pts) => pts.length > 0);
-        return { name, segs };
+        const color = normColor(localText(trk, "color"));
+        const width = localText(trk, "width").toLowerCase();
+        const dashed = localText(trk, "dashed").toLowerCase() === "true";
+        const visible = localText(trk, "visible").toLowerCase() !== "false";
+        const sourceFile = localText(trk, "file");
+        return {
+          name: name,
+          segs: segs,
+          color: color,
+          thin: width === "thin",
+          dashed: dashed,
+          visible: visible,
+          sourceFile: sourceFile
+        };
       }).filter((t) => t.segs.length > 0);
+    }
+
+    function parseSaveMeta(xmlText) {
+      const doc = new DOMParser().parseFromString(xmlText, "application/xml");
+      const root = doc.documentElement;
+      if (!root || (root.getAttribute("creator") || "").indexOf("JMR") < 0) return null;
+      const lat = Number(localText(root, "lat"));
+      const lon = Number(localText(root, "lon"));
+      const zoom = Number(localText(root, "zoom"));
+      return {
+        center: Number.isFinite(lat) && Number.isFinite(lon) ? [lat, lon] : null,
+        zoom: Number.isFinite(zoom) ? zoom : null,
+        basemap: localText(root, "basemap"),
+        showNames: localText(root, "showNames").toLowerCase() === "true"
+      };
     }
 
     function fileOf(seg) {
@@ -579,6 +711,8 @@
         selected = null;
         vertexLayer.clearLayers();
       }
+      if (splitPick && splitPick.track === seg && !on) splitPick = null;
+      refreshLabel(seg);
     }
 
     function clearTracks() {
@@ -587,6 +721,7 @@
       files.length = 0;
       Object.keys(trackState).forEach((k) => { delete trackState[k]; });
       selected = null;
+      splitPick = null;
       vertexLayer.clearLayers();
       hideColorPop();
       rebuildList();
@@ -600,6 +735,7 @@
         selected = null;
         vertexLayer.clearLayers();
       }
+      if (splitPick && splitPick.track === track) splitPick = null;
       if (!tracks.some((t) => t.fileId === track.fileId)) {
         const fi = files.findIndex((f) => f.id === track.fileId);
         if (fi >= 0) files.splice(fi, 1);
@@ -607,28 +743,54 @@
       rebuildList();
     }
 
+    function applyLineStyle(track) {
+      track.line.setStyle({
+        color: track.color,
+        weight: track.thin ? 3 : 8,
+        opacity: 1,
+        dashArray: track.dashed ? "10, 8" : null
+      });
+      track.hit.setStyle({ color: track.color, weight: 18, opacity: 0 });
+    }
+
+    function refreshLabel(track) {
+      if (track.line.getTooltip()) track.line.unbindTooltip();
+      if (showNames && track.name && isShown(track)) {
+        track.line.bindTooltip(track.name, {
+          permanent: true,
+          direction: "center",
+          className: "seg-label",
+          opacity: 0.95
+        });
+      }
+    }
+
+    function setShowNames(on) {
+      showNames = !!on;
+      const box = document.getElementById("chk-names");
+      if (box) box.checked = showNames;
+      tracks.forEach(refreshLabel);
+    }
+
     function setTrackColor(track, color) {
       track.color = color;
-      track.line.setStyle({ color: color });
-      track.hit.setStyle({ color: color });
+      applyLineStyle(track);
       if (track.input) track.input.value = color;
       if (selected === track && toolMode === "split") showVertices(track);
+      refreshLabel(track);
     }
 
     function selectTrack(track, clickEvent) {
       selected = track;
       tracks.forEach((t) => {
-        t.line.setStyle({ weight: 8 });
+        applyLineStyle(t);
         if (t.row) t.row.classList.toggle("selected", t === track);
       });
       if (toolMode === "split") showVertices(track);
       else vertexLayer.clearLayers();
       // Color popup only when the list color box asked for it, not on map clicks.
-      if (clickEvent && clickEvent.showColors) {
-        const pop = document.getElementById("color-pop");
-        pop.style.display = "block";
-        pop.style.left = (clickEvent.originalEvent.clientX + 12) + "px";
-        pop.style.top = (clickEvent.originalEvent.clientY + 12) + "px";
+      if (clickEvent && clickEvent.showColors && clickEvent.originalEvent) {
+        showColorPop(clickEvent.originalEvent.clientX, clickEvent.originalEvent.clientY);
       } else {
         hideColorPop();
       }
@@ -638,20 +800,52 @@
     function showVertices(track) {
       vertexLayer.clearLayers();
       if (toolMode !== "split" || !track || !track.points) return;
-      track.points.forEach((pt) => {
-        L.circleMarker(pt, {
-          radius: 6,
+      track.points.forEach((pt, i) => {
+        const dot = L.circleMarker(pt, {
+          radius: 8,
           color: "#ffffff",
           weight: 2,
           fillColor: track.color,
           fillOpacity: 1,
+          interactive: true
+        });
+        // Tap a vertex to pick it as the start or end of the split.
+        dot.on("click", (e) => {
+          L.DomEvent.stopPropagation(e);
+          applySplitPick(track, cutFromVertex(track, i));
+        });
+        dot.addTo(vertexLayer);
+      });
+      if (splitPick && splitPick.track === track) {
+        L.circleMarker(splitPick.point, {
+          radius: 11,
+          color: "#111111",
+          weight: 3,
+          fillColor: "#ffffff",
+          fillOpacity: 1,
           interactive: false
         }).addTo(vertexLayer);
-      });
+      }
+      vertexLayer.bringToFront();
     }
 
     function hideColorPop() {
       document.getElementById("color-pop").style.display = "none";
+    }
+
+    function showColorPop(x, y) {
+      const pop = document.getElementById("color-pop");
+      pop.style.display = "block";
+      pop.style.left = "0px";
+      pop.style.top = "0px";
+      const pad = 10;
+      const r = pop.getBoundingClientRect();
+      let left = x + 12;
+      let top = y + 12;
+      if (left + r.width > window.innerWidth - pad) left = window.innerWidth - r.width - pad;
+      if (top + r.height > window.innerHeight - pad) top = y - r.height - 12;
+      pop.style.left = Math.max(pad, left) + "px";
+      pop.style.top = Math.max(pad, top) + "px";
     }
 
     // Closest point on one straight segment; used to pick the split location.
@@ -667,38 +861,111 @@
       return { point: point, t: t, dist: p.distanceTo(point) };
     }
 
-    // Cut one track into two pieces that share the click point.
-    function splitTrackAt(track, latlng) {
+    function hitOnTrack(track, latlng) {
       const pts = track.points;
-      if (!pts || pts.length < 2) return;
       let best = { i: 0, dist: Infinity, point: pts[0], t: 0 };
       for (let i = 0; i < pts.length - 1; i++) {
         const hit = closestOnSegment(latlng, pts[i], pts[i + 1]);
         if (hit.dist < best.dist) best = { i: i, dist: hit.dist, point: hit.point, t: hit.t };
       }
-      // Always put the click point on both pieces so a 2-point line can still split.
-      const left = pts.slice(0, best.i + 1).concat([best.point]);
-      const right = [best.point].concat(pts.slice(best.i + 1));
-      if (left.length < 2 || right.length < 2) return;
+      return best;
+    }
+
+    // Turn a vertex index into the same cut shape as a click on the line.
+    function cutFromVertex(track, i) {
+      const pts = track.points;
+      if (i <= 0) return { i: 0, t: 0, point: pts[0], dist: 0 };
+      if (i >= pts.length - 1) return { i: pts.length - 2, t: 1, point: pts[pts.length - 1], dist: 0 };
+      return { i: i, t: 0, point: pts[i], dist: 0 };
+    }
+
+    function pieceOk(points) {
+      if (!points || points.length < 2) return false;
+      const a = L.latLng(points[0]);
+      return points.some((p) => a.distanceTo(p) > 2);
+    }
+
+    // Replace one segment with the pieces from a start/end split. Same file and parent track.
+    function replaceWithPieces(track, pieces, selectOffset) {
       const idx = tracks.indexOf(track);
-      const leftName = track.name || "";
-      const leftColor = track.color;
-      const rightColor = COLORS[(idx + 1) % COLORS.length];
       const fileId = track.fileId;
       const trackId = track.trackId;
-      // removeTrack rebuilds the list; add the two pieces back under the same file/track.
+      const thin = track.thin;
+      const dashed = track.dashed;
       tracks.splice(idx, 1);
       track.group.remove();
       if (selected === track) {
         selected = null;
         vertexLayer.clearLayers();
       }
-      addOneTrack({ name: leftName, segs: [left], fileId: fileId, trackId: trackId }, leftColor, idx, false);
-      addOneTrack({ name: "", segs: [right], fileId: fileId, trackId: trackId }, rightColor, idx + 1, false);
+      splitPick = null;
+      pieces.forEach((p, n) => {
+        addOneTrack({
+          name: p.name,
+          segs: [p.points],
+          fileId: fileId,
+          trackId: trackId,
+          thin: thin,
+          dashed: dashed
+        }, p.color, idx + n, false);
+      });
       rebuildList();
-      // Leave split mode so each half can be colored; Split still works later.
+      // Leave split mode so each piece can be colored; Split still works later.
       setTool("color");
-      selectTrack(tracks[idx + 1]);
+      selectTrack(tracks[idx + selectOffset]);
+    }
+
+    function applySplitPick(track, hit) {
+      if (splitPick && splitPick.track === track) {
+        splitTrackRange(track, splitPick, hit);
+        return;
+      }
+      splitPick = { track: track, i: hit.i, point: hit.point, t: hit.t };
+      selectTrack(track);
+      document.getElementById("tool-status").textContent = "Click the end of the split.";
+    }
+
+    // First click is the start; second click on the same segment is the end.
+    function splitTrackAt(track, latlng) {
+      applySplitPick(track, hitOnTrack(track, latlng));
+    }
+
+    // Cut at start and end. One click-pair can make two or three pieces.
+    function splitTrackRange(track, a, b) {
+      const pts = track.points;
+      if (!pts || pts.length < 2) return;
+      if (a.i > b.i || (a.i === b.i && a.t > b.t)) {
+        const tmp = a;
+        a = b;
+        b = tmp;
+      }
+      const idx = tracks.indexOf(track);
+      const leftName = track.name || "";
+      const leftColor = track.color;
+      const midColor = COLORS[(idx + 1) % COLORS.length];
+      const rightColor = COLORS[(idx + 2) % COLORS.length];
+      const same = a.i === b.i && Math.abs(a.t - b.t) < 0.02;
+      // Always put the click point on both pieces so a 2-point line can still split.
+      if (same) {
+        const left = pts.slice(0, a.i + 1).concat([a.point]);
+        const right = [a.point].concat(pts.slice(a.i + 1));
+        const pieces = [];
+        if (pieceOk(left)) pieces.push({ name: leftName, color: leftColor, points: left });
+        if (pieceOk(right)) pieces.push({ name: "", color: midColor, points: right });
+        if (pieces.length < 2) return;
+        replaceWithPieces(track, pieces, Math.min(1, pieces.length - 1));
+        return;
+      }
+      const left = pts.slice(0, a.i + 1).concat([a.point]);
+      const mid = [a.point].concat(pts.slice(a.i + 1, b.i + 1)).concat([b.point]);
+      const right = [b.point].concat(pts.slice(b.i + 1));
+      const pieces = [];
+      if (pieceOk(left)) pieces.push({ name: leftName, color: leftColor, points: left });
+      if (pieceOk(mid)) pieces.push({ name: "", color: pieces.length ? midColor : leftColor, points: mid });
+      if (pieceOk(right)) pieces.push({ name: "", color: rightColor, points: right });
+      if (pieces.length < 2) return;
+      const midOffset = pieceOk(left) && pieceOk(mid) ? 1 : 0;
+      replaceWithPieces(track, pieces, midOffset);
     }
 
     function fitToTracks() {
@@ -732,8 +999,11 @@
         points: points,
         fileId: data.fileId,
         trackId: data.trackId,
-        visible: true
+        visible: data.visible !== false,
+        thin: !!data.thin,
+        dashed: !!data.dashed
       };
+      applyLineStyle(track);
       if (insertAt == null || insertAt >= tracks.length) tracks.push(track);
       else tracks.splice(insertAt, 0, track);
 
@@ -749,6 +1019,7 @@
       hit.on("click", onPick);
       line.on("click", onPick);
       applyVisibility(track);
+      refreshLabel(track);
       if (doFit) fitToTracks();
     }
 
@@ -784,9 +1055,20 @@
       del.className = "del-btn";
       del.title = "Delete this segment";
       del.textContent = "×";
+      const styleSel = document.createElement("select");
+      styleSel.className = "line-style";
+      styleSel.title = "Line style";
+      [["", "Line"], ["thin", "Thin"], ["dashed", "Dashed"], ["thin-dashed", "Thin dashed"]].forEach((opt) => {
+        const o = document.createElement("option");
+        o.value = opt[0];
+        o.textContent = opt[1];
+        styleSel.appendChild(o);
+      });
+      styleSel.value = (seg.thin && seg.dashed) ? "thin-dashed" : (seg.dashed ? "dashed" : (seg.thin ? "thin" : ""));
       row.appendChild(cb);
       row.appendChild(input);
       row.appendChild(nameInput);
+      row.appendChild(styleSel);
       row.appendChild(del);
       if (!isShown(seg)) row.classList.add("off-label");
 
@@ -800,8 +1082,14 @@
         e.stopPropagation();
         selectTrack(seg, { showColors: true, originalEvent: e });
       });
-      nameInput.addEventListener("input", () => { seg.name = nameInput.value; });
+      nameInput.addEventListener("input", () => { seg.name = nameInput.value; refreshLabel(seg); });
       nameInput.addEventListener("click", (e) => e.stopPropagation());
+      styleSel.addEventListener("click", (e) => e.stopPropagation());
+      styleSel.addEventListener("change", () => {
+        seg.thin = styleSel.value.indexOf("thin") >= 0;
+        seg.dashed = styleSel.value.indexOf("dashed") >= 0;
+        applyLineStyle(seg);
+      });
       del.addEventListener("click", (e) => {
         e.stopPropagation();
         removeTrack(seg);
@@ -874,19 +1162,189 @@
     }
 
     function addGpxFile(xmlText, fileName) {
-      const fileId = nextId++;
-      files.push({ id: fileId, name: fileName || "GPX", visible: true });
+      const start = tracks.length;
+      const fileMap = new Map();
       parseGpx(xmlText).forEach((data) => {
+        const fname = data.sourceFile || fileName || "GPX";
+        let file = fileMap.get(fname);
+        if (!file) {
+          file = { id: nextId++, name: fname, visible: true };
+          files.push(file);
+          fileMap.set(fname, file);
+        }
         const trackId = nextId++;
         trackState[trackId] = { visible: true, name: data.name || "" };
         addOneTrack({
           name: data.name || "",
           segs: data.segs,
-          fileId: fileId,
-          trackId: trackId
-        }, null, null, false);
+          fileId: file.id,
+          trackId: trackId,
+          thin: data.thin,
+          dashed: data.dashed,
+          visible: data.visible
+        }, data.color || null, null, false);
       });
       rebuildList();
+      const meta = parseSaveMeta(xmlText);
+      if (meta) {
+        if (meta.showNames) setShowNames(true);
+        if (meta.basemap === "satellite") {
+          if (map.hasLayer(streetLayer)) map.removeLayer(streetLayer);
+          if (!map.hasLayer(satelliteLayer)) map.addLayer(satelliteLayer);
+          document.getElementById("btn-satellite").classList.add("active");
+          document.getElementById("btn-regular").classList.remove("active");
+        }
+        if (meta.center) map.setView(meta.center, meta.zoom || map.getZoom());
+      }
+      // If this file is outside the default Vermont area, jump the map there.
+      if (!meta || !meta.center) goToTracksIfOutsideDefault(tracks.slice(start));
+    }
+
+    function goToTracksIfOutsideDefault(added) {
+      const valid = added.filter((t) => t.group.getBounds().isValid());
+      if (!valid.length) return;
+      let b = valid[0].group.getBounds();
+      valid.slice(1).forEach((t) => { b.extend(t.group.getBounds()); });
+      const home = L.latLngBounds(
+        [DEFAULT_CENTER[0] - 0.03, DEFAULT_CENTER[1] - 0.04],
+        [DEFAULT_CENTER[0] + 0.03, DEFAULT_CENTER[1] + 0.04]
+      );
+      if (!home.intersects(b)) {
+        map.invalidateSize();
+        map.fitBounds(b.pad(0.15));
+      }
+    }
+
+    function escapeXml(s) {
+      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function buildSaveGpx() {
+      const center = map.getCenter();
+      const now = new Date().toISOString();
+      let xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+      xml += "<gpx version=\"1.1\" creator=\"JMR's Mapper\" xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:osmand=\"https://osmand.net\" xmlns:jmr=\"https://github.com/jmrothberg/jmrs-mapper\">\n";
+      xml += "  <metadata>\n    <name>JMR's Mapper save</name>\n    <time>" + now + "</time>\n";
+      xml += "    <extensions>\n";
+      xml += "      <jmr:lat>" + center.lat + "</jmr:lat>\n";
+      xml += "      <jmr:lon>" + center.lng + "</jmr:lon>\n";
+      xml += "      <jmr:zoom>" + map.getZoom() + "</jmr:zoom>\n";
+      xml += "      <jmr:basemap>" + (map.hasLayer(satelliteLayer) ? "satellite" : "street") + "</jmr:basemap>\n";
+      xml += "      <jmr:showNames>" + (showNames ? "true" : "false") + "</jmr:showNames>\n";
+      xml += "    </extensions>\n  </metadata>\n";
+      tracks.forEach((t) => {
+        const file = fileOf(t);
+        xml += "  <trk>\n    <name>" + escapeXml(t.name || "") + "</name>\n";
+        xml += "    <extensions>\n";
+        xml += "      <osmand:color>" + escapeXml(t.color) + "</osmand:color>\n";
+        xml += "      <osmand:width>" + (t.thin ? "thin" : "medium") + "</osmand:width>\n";
+        xml += "      <jmr:dashed>" + (t.dashed ? "true" : "false") + "</jmr:dashed>\n";
+        xml += "      <jmr:visible>" + (t.visible ? "true" : "false") + "</jmr:visible>\n";
+        xml += "      <jmr:file>" + escapeXml(file ? file.name : "") + "</jmr:file>\n";
+        xml += "    </extensions>\n    <trkseg>\n";
+        t.points.forEach((p) => {
+          xml += "      <trkpt lat=\"" + p[0] + "\" lon=\"" + p[1] + "\"></trkpt>\n";
+        });
+        xml += "    </trkseg>\n  </trk>\n";
+      });
+      xml += "</gpx>\n";
+      return xml;
+    }
+
+    function downloadGpx(xmlText) {
+      const day = new Date().toISOString().slice(0, 10);
+      const name = "JMR-Mapper-" + day + ".gpx";
+      const file = new File([xmlText], name, { type: "application/gpx+xml" });
+      // iPhone Safari ignores <a download>; the share sheet is how you Save to Files.
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: "JMR's Mapper" }).catch(function (err) {
+          if (err && err.name === "AbortError") return;
+          fallbackDownload(file, name);
+        });
+        return;
+      }
+      fallbackDownload(file, name);
+    }
+
+    function fallbackDownload(file, name) {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(file);
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        URL.revokeObjectURL(a.href);
+        a.remove();
+      }, 500);
+    }
+
+    function saveMap() {
+      const center = map.getCenter();
+      const data = {
+        center: [center.lat, center.lng],
+        zoom: map.getZoom(),
+        basemap: map.hasLayer(satelliteLayer) ? "satellite" : "street",
+        showNames: showNames,
+        nextId: nextId,
+        files: files.map((f) => ({ id: f.id, name: f.name, visible: f.visible })),
+        trackState: trackState,
+        tracks: tracks.map((t) => ({
+          name: t.name,
+          color: t.color,
+          points: t.points,
+          fileId: t.fileId,
+          trackId: t.trackId,
+          visible: t.visible,
+          thin: t.thin,
+          dashed: t.dashed
+        }))
+      };
+      try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+      } catch (err) {}
+      downloadGpx(buildSaveGpx());
+      const btn = document.getElementById("btn-save");
+      btn.textContent = "Saved";
+      setTimeout(() => { btn.textContent = "Save map"; }, 1400);
+      return true;
+    }
+
+    function loadSavedMap() {
+      let data;
+      try {
+        data = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
+      } catch (err) {
+        return false;
+      }
+      if (!data || !data.tracks || !data.tracks.length) return false;
+      nextId = data.nextId || 1;
+      (data.files || []).forEach((f) => files.push({ id: f.id, name: f.name, visible: f.visible !== false }));
+      Object.keys(data.trackState || {}).forEach((k) => { trackState[k] = data.trackState[k]; });
+      data.tracks.forEach((t) => {
+        addOneTrack({
+          name: t.name || "",
+          segs: [t.points],
+          fileId: t.fileId,
+          trackId: t.trackId,
+          thin: t.thin,
+          dashed: t.dashed,
+          visible: t.visible
+        }, t.color, null, false);
+        const made = tracks[tracks.length - 1];
+        made.visible = t.visible !== false;
+        applyVisibility(made);
+      });
+      rebuildList();
+      if (data.showNames) setShowNames(true);
+      if (data.basemap === "satellite") {
+        if (map.hasLayer(streetLayer)) map.removeLayer(streetLayer);
+        if (!map.hasLayer(satelliteLayer)) map.addLayer(satelliteLayer);
+        document.getElementById("btn-satellite").classList.add("active");
+        document.getElementById("btn-regular").classList.remove("active");
+      }
+      if (data.center) map.setView(data.center, data.zoom || 16);
+      map.invalidateSize();
+      return true;
     }
 
     function setTool(mode) {
@@ -895,10 +1353,12 @@
       document.getElementById("btn-split").classList.toggle("active", mode === "split");
       const status = document.getElementById("tool-status");
       if (mode === "split") {
-        status.textContent = "Click where you want to split a segment.";
+        splitPick = null;
+        status.textContent = "Click the start of the split.";
         map.getContainer().style.cursor = "crosshair";
         if (selected) showVertices(selected);
       } else {
+        splitPick = null;
         status.textContent = "";
         map.getContainer().style.cursor = "";
         vertexLayer.clearLayers();
@@ -935,6 +1395,25 @@
       fitToTracks();
     };
 
+    document.getElementById("btn-save").onclick = function () {
+      saveMap();
+    };
+
+    document.getElementById("chk-names").onchange = function () {
+      setShowNames(this.checked);
+    };
+
+    document.getElementById("btn-panel-toggle").onclick = function () {
+      const panel = document.getElementById("panel");
+      panel.classList.toggle("collapsed");
+      this.textContent = panel.classList.contains("collapsed") ? "▴" : "▾";
+      this.setAttribute("aria-label", panel.classList.contains("collapsed") ? "Show tools" : "Hide tools");
+      setTimeout(() => map.invalidateSize(), 200);
+    };
+
+    window.addEventListener("resize", () => map.invalidateSize());
+    window.addEventListener("orientationchange", () => setTimeout(() => map.invalidateSize(), 300));
+
     const swatchBox = document.getElementById("swatches");
     SWATCHES.forEach((c) => {
       const d = document.createElement("div");
@@ -951,7 +1430,8 @@
 
     map.on("click", hideColorPop);
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideColorPop(); });
-    // No tracks are loaded until the user adds a GPX file. Map stays on this area.
+    // Restore a saved map if the user pressed Save map last time; otherwise stay on this Vermont area.
+    loadSavedMap();
   </script>
 </body>
 </html>
