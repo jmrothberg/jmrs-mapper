@@ -1,11 +1,8 @@
 # JMR's Mapper
 
-A simple browser map for GPX tracks. Load a recording, split it into named colored segments, and switch between a regular map and satellite.
+![JMR's Mapper — Wilmington, Vermont](vermont-preview.png)
 
-GPX files in this folder:
-
-- `vermont-track-2.1.gpx` — OsmAnd export with 3 short tracks (40 points)
-- `2026-08-07_14-45_Fri.gpx` — longer OsmAnd recording (3 tracks, about 1,300 points). Use **Add GPX files** to load it.
+A simple browser map for GPX tracks. The map opens on the Wilmington, Vermont area and does **not** load any tracks until you add a GPX file.
 
 ## Open it
 
@@ -15,21 +12,23 @@ From this folder:
 python3 -m http.server 8765
 ```
 
-Then open [http://127.0.0.1:8765/](http://127.0.0.1:8765/).
-
-You can also open `index.html` directly. The GPX is embedded in the page so tracks still load.
+Then open [http://127.0.0.1:8765/](http://127.0.0.1:8765/). You can also open `index.html` directly.
 
 ## How to use it
 
-- **Regular map / Satellite** — buttons in the top-left panel
-- **Select a track** — click a line. Dots appear on its GPS points
-- **Split** — click that same selected line where you want to cut it. The new piece is named `… b` so you can rename it
-- **Name** — type in the text box next to the piece
-- **Color** — use the color square, or the swatches that appear when you click it
-- **Delete** — click **×** on a piece
-- **Add GPX files** — drop in more recordings; they are added to the map, not replaced
+- **Add GPX files** — load one or more recordings. Each file is a group in the list
+- **On / off** — uncheck a file, a track, or a segment to hide it
+- **Regular map / Satellite** — basemap buttons
+- **Color** (default) — click a line to select it and change its color
+- **Split** — choose Split on the toolbar, then click where you want to split a segment. After the cut, the tool returns to Color so you can color each half. The split dots go away; you can choose Split again later
+- **Name** — type a name in the list
+- **Delete** — click **×**
+- **Fit visible** — zoom to whatever is currently turned on (the map does not auto-zoom)
+
+After you split a track, a track checkbox appears so you can hide that whole track or just one piece.
 
 ## Files
 
 - `index.html` — the map app
-- `vermont-track-2.1.gpx` — the included Vermont recording
+- `vermont-track-2.1.gpx` — short OsmAnd recording (3 tracks)
+- `2026-08-07_14-45_Fri.gpx` — longer OsmAnd recording
