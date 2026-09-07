@@ -108,6 +108,26 @@
       margin-bottom: 12px;
       cursor: pointer;
     }
+    .example-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #555;
+      margin: 0 0 6px;
+    }
+    .example-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      border: 0;
+      background: #eef1f4;
+      padding: 10px 12px;
+      min-height: 44px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .example-btn:disabled { opacity: 0.45; }
     .btn-row { display: flex; gap: 8px; margin-top: 8px; }
     .btn-row button {
       flex: 1;
@@ -267,13 +287,14 @@
     <label id="file-btn">Add GPX files
       <input id="gpx-file" type="file" accept=".gpx,.xml,application/gpx+xml,application/xml,text/xml,application/octet-stream" multiple hidden />
     </label>
+    <div id="example-list"></div>
     <label class="check-row"><input id="chk-names" type="checkbox" /> Show names on map</label>
     <div id="file-list"></div>
     <div class="btn-row">
       <button id="btn-save" type="button">Save map</button>
       <button id="btn-fit" type="button">Fit visible</button>
     </div>
-    <p class="hint">Check a box to show or hide a file, a track, or a segment. Color is the default tool: click a line to color it. Use × to delete. Save map downloads one GPX with all segments and styles.</p>
+    <p class="hint">Check a box to show or hide a file, a track, or a segment. Color is the default tool: click a line to color it. Use × to delete. Save map downloads one GPX with all segments and styles. Example tracks load sample GPX from this site.</p>
     </div>
   </div>
 
@@ -615,6 +636,13 @@
 
     const DEFAULT_CENTER = [42.862, -72.889];
     const SAVE_KEY = "jmrs-mapper-save";
+    const EXAMPLE_GPX = [
+      { file: "goose neck 2026-09-06_12-26_Sun.gpx", label: "Goose Neck" },
+      { file: "vermont track 1 2026-08-07_14-55_Fri.gpx", label: "Vermont track 1" },
+      { file: "vermont track 2 2026-08-10_16-26_Mon.gpx", label: "Vermont track 2" },
+      { file: "vermont track 2.1 2026-08-10_17-46_Mon.gpx", label: "Vermont track 2.1" },
+      { file: "vermont track 3 2026-09-05_11-30_Sat.gpx", label: "Vermont track 3" }
+    ];
     const map = L.map("map", { layers: [streetLayer], tap: true });
     map.setView(DEFAULT_CENTER, 16);
     L.DomEvent.disableClickPropagation(document.getElementById("panel"));
@@ -1200,6 +1228,20 @@
       if (!meta || !meta.center) goToTracksIfOutsideDefault(tracks.slice(start));
     }
 
+    // Load a sample GPX from this site so people without local files can still try the map.
+    function loadExampleGpx(fileName, btn) {
+      if (files.some((f) => f.name === fileName)) return;
+      if (btn) btn.disabled = true;
+      fetch(encodeURI(fileName)).then((r) => {
+        if (!r.ok) throw new Error("missing");
+        return r.text();
+      }).then((xml) => {
+        addGpxFile(xml, fileName);
+      }).catch(() => {
+        if (btn) btn.disabled = false;
+      });
+    }
+
     function goToTracksIfOutsideDefault(added) {
       const valid = added.filter((t) => t.group.getBounds().isValid());
       if (!valid.length) return;
@@ -1390,6 +1432,23 @@
         reader.readAsText(file);
       });
     });
+
+    (function buildExampleList() {
+      const box = document.getElementById("example-list");
+      if (!box) return;
+      const label = document.createElement("div");
+      label.className = "example-label";
+      label.textContent = "Example tracks";
+      box.appendChild(label);
+      EXAMPLE_GPX.forEach((ex) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "example-btn";
+        btn.textContent = ex.label;
+        btn.onclick = function () { loadExampleGpx(ex.file, btn); };
+        box.appendChild(btn);
+      });
+    })();
 
     document.getElementById("btn-fit").onclick = function () {
       fitToTracks();

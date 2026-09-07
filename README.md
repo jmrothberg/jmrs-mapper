@@ -19,6 +19,7 @@ Then open [http://127.0.0.1:8765/](http://127.0.0.1:8765/). You can also open `i
 ## How to use it
 
 - **Add GPX files** — load one or more recordings. Each file is a group in the list
+- **Example tracks** — tap a sample (Goose Neck, Vermont tracks 1–3 and 2.1) if you have no GPX of your own
 - **On / off** — uncheck a file, a track, or a segment to hide it
 - **Regular map / Satellite** — basemap buttons
 - **Color** (default) — click a line to select it and change its color
@@ -38,5 +39,10 @@ After you split a track, a track checkbox appears so you can hide that whole tra
 ## Files
 
 - `index.html` — the map app
+- `goose neck 2026-09-06_12-26_Sun.gpx` — Goose Neck example
+- `vermont track 1 2026-08-07_14-55_Fri.gpx` — Vermont track 1 example
+- `vermont track 2 2026-08-10_16-26_Mon.gpx` — Vermont track 2 example
+- `vermont track 2.1 2026-08-10_17-46_Mon.gpx` — Vermont track 2.1 example
+- `vermont track 3 2026-09-05_11-30_Sat.gpx` — Vermont track 3 example
 - `vermont-track-2.1.gpx` — short OsmAnd recording (3 tracks)
 - `2026-08-07_14-45_Fri.gpx` — longer OsmAnd recording
